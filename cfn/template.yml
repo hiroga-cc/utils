@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: For Amplify Console
+
+Parameters:
+    ENV:
+        Type: String
+    Domain:
+        Type: String
+    AccessToken:
+        Type: String
+    BranchName:
+        Type: String
+        Default: master
+
+Resources:
+    UtilAmplifyApp:
+        Type: AWS::Amplify::App
+        Properties:
+            Name: !Sub util
+            AccessToken: !Ref AccessToken
+            CustomRules: 
+                - Source: "/assets/<*>"
+                  Target: "/assets/<*>"
+                  Status: "200"
+                - Source: "/src/<*>"
+                  Target: "/src/<*>"
+                  Status: "200"
+                - Source: "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/>"
+                  Target: "/index.html"
+                  Status: "200"
+                  # https://docs.aws.amazon.com/amplify/latest/userguide/redirects.html
+            EnvironmentVariables:
+                - Name: ENV
+                  Value: !Ref ENV
+            Repository: https://github.com/hiroga-cc/utils
+
+    UtilAmplifyBranch:
+        Type: AWS::Amplify::Branch
+        Properties:
+            AppId:
+                Fn::GetAtt: UtilAmplifyApp.AppId
+            BranchName: !Ref BranchName
+            EnableAutoBuild: true
+            EnablePullRequestPreview: false
+
+    UtilAmplifyDomain:
+        Type: AWS::Amplify::Domain
+        DependsOn: UtilAmplifyBranch
+        Properties:
+            AppId:
+                Fn::GetAtt: UtilAmplifyApp.AppId
+            DomainName: !Ref Domain
+            SubDomainSettings:
+                - BranchName: !Ref BranchName
+                  Prefix: ""

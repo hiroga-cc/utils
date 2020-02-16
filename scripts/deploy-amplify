@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# ./scripts/deploy-amplify prod
+
+set -euxo
+
+ENV=prod
+PERSONAL_ACCESS_TOKEN=$(aws ssm get-parameter --name "/github/hiroga-cc-personal-access-token" --with-decryption --output text --query Parameter.Value)
+
+aws cloudformation deploy \
+  --template-file "./cfn/template.yml" \
+  --stack-name "utils-amplify-console" \
+  --parameter-overrides "ENV=${ENV}" "Domain=utils.hiroga.cc" "AccessToken=${PERSONAL_ACCESS_TOKEN}" \
+  --profile ${ENV}
